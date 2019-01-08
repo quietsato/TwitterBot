@@ -17,4 +17,4 @@ python3 ./bot.py
 
 ## Dependences
 - mecab
-- reqests-oauthlib
+- requests-oauthlib
