@@ -45,14 +45,14 @@ def get_tweet():
             if(st.startswith('RT @')):
                 # リツイートは除外する
                 continue
-            if(st.find('http') > -1):
+            if 'http' in st:
                 #URL付きツイートは外部サービス感が出るから除外
                 continue
             if(user == USER_NAME):
                 # 自分のツイートから学習するとつまらない
                 continue
             for w in st.split():
-                if(w.find('@') > -1):
+                if '@' in w:
                     # ツイート途中の@ユーザー名は除外する
                     continue
                 # splitで消えたスペースを追加しておく
