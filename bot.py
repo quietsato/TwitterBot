@@ -54,7 +54,10 @@ def get_tweet():
             for w in st.split():
                 if '@' in w:
                     # ツイート途中の@ユーザー名は除外する
-                    continue
+                    break 
+                if '#' in w:
+                    # After HashTag is not interested.
+                    break
                 # splitで消えたスペースを追加しておく
                 tw += ' ' + w
             # 先頭のスペースを除く
