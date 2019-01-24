@@ -50,13 +50,13 @@ def get_tweet():
                 continue
             if(user == USER_NAME):
                 # 自分のツイートから学習するとつまらない
-                continue
+                continue                    
             for w in st.split():
                 if '@' in w:
                     # ツイート途中の@ユーザー名は除外する
                     break 
                 if '#' in w:
-                    # After HashTag is not interested.
+                    # ハッシュタグ以降は取り入れない
                     break
                 # splitで消えたスペースを追加しておく
                 tw += ' ' + w
@@ -134,7 +134,7 @@ def choose_sentence(sentences):
         # オリジナリティーが欲しいので2まで除いてやる
         if (len(st) - cost > 2):
             tmp.append(st)
-            # print(format_sentence(st) + ' cost:' + str(cost) + ' block:' + str(len(st)))
+            print(format_sentence(st) + ' cost:' + str(cost) + ' block:' + str(len(st)))
     
     idx = randint(0,len(tmp))
 
@@ -182,7 +182,7 @@ def access_twitter_api():
                             ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
 
     url = "https://api.twitter.com/1.1/statuses/home_timeline.json"
-    params = {'count': 300}
+    params = {'count': 200}
 
     req = twitter.get(url, params=params)
     return req
