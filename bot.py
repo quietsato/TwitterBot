@@ -50,7 +50,8 @@ def get_tweet():
                 continue
             if(user == USER_NAME):
                 # 自分のツイートから学習するとつまらない
-                continue                    
+                continue
+
             for w in st.split():
                 if '@' in w:
                     # ツイート途中の@ユーザー名は除外する
@@ -58,9 +59,8 @@ def get_tweet():
                 if '#' in w:
                     # ハッシュタグ以降は取り入れない
                     break
-                # splitで消えたスペースを追加しておく
                 tw += ' ' + w
-            # 先頭のスペースを除く
+            
             tw = tw.strip()
             if len(tw) > 0:
                 tweets.append((tw, _id))
@@ -112,7 +112,6 @@ def generate_sentences(chain_block):
             block = block_available[randint(0, len(block_available) - 1)]
             sentence.append(block)
 
-            # 使ったものは削除
             blocks.remove(block)
         
         sentences.append(sentence)
@@ -134,7 +133,6 @@ def choose_sentence(sentences):
         # オリジナリティーが欲しいので2まで除いてやる
         if (len(st) - cost > 2):
             tmp.append(st)
-            print(format_sentence(st) + ' cost:' + str(cost) + ' block:' + str(len(st)))
     
     idx = randint(0,len(tmp))
 
