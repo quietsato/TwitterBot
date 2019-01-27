@@ -147,11 +147,6 @@ def format_sentence(sentence):
     for block in sentence:
         for word in block[1:3]:
             if(word != '__BEGIN__'):
-                # 文末にはスペースを入れておく
-                if(word == '__END__'):
-                    fmt_sentence += ' '
-                    continue
-
                 # ハッシュタグを生かす
                 if(word.startswith('#')):
                     fmt_sentence += ' '
