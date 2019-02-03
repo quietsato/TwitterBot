@@ -200,4 +200,4 @@ if __name__ == "__main__":
     block = select_block(joined_blocks)
     text = convert_blocks_tostr(block)
     print(text)
-    # tweet(text)
+    tweet(text)
