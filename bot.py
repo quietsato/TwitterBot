@@ -15,6 +15,8 @@ CONSUMER_KEY_SECRET = None
 USER_NAME = None
 
 verbose = False
+ignore_config = None
+
 
 def get_environ():
     global ACCESS_TOKEN
@@ -33,7 +35,7 @@ def get_environ():
         if env is None:
             print('E: Environment value is not set.')
             sys.exit(1)
-    
+
     if verbose:
         print('Your Twitter User Name is ' + USER_NAME)
 
@@ -55,41 +57,43 @@ def get_tweet():
         if verbose:
             print('Got Tweets From API (count: ' + str(len(timeline)) + ')')
 
+        ignore_config = read_ignores()
+        ignores = ignore_config[0]
+        ignore_words = ignore_config[1]
+
         for tweet in timeline:
             tw = ''
             text = str(tweet['text'])
             user = str(tweet['user']['screen_name'])
 
-            if(text.startswith('@')):
-                # @リプライは除外する
+            isignore = False
+
+            for ig in ignores:
+                if ig in text:
+                    isignore = True
+
+            if isignore:
                 continue
-            if(text.startswith('RT @')):
-                # リツイートは除外する
-                continue
-            if 'http' in text:
-                # URL付きツイートは外部サービス感が出るから除外
-                continue
+
             if(user == USER_NAME):
                 # 自分のツイートから学習するとつまらない
                 continue
 
             for word in text.split():
-                if '@' in word:
-                    # ツイート途中に@ユーザー名が出てきたらもう読まない
-                    break
-                if '#' in word:
-                    # ハッシュタグ以降は取り入れない
+                for ig in ignore_words:
+                    if ig in word:
+                        isignore = True
+                if isignore:
                     break
                 tw += ' ' + word
 
             tw = tw.strip()
 
-
             if len(tw) > 0:
                 tweets.append((tw, tweet_id))
                 tweet_id += 1
                 if verbose:
-                    print('Add: ' + tw )
+                    print('Add: ' + tw)
 
         if verbose:
             print('Create Tweet List (count:' + str(len(tweets)) + ')')
@@ -98,6 +102,25 @@ def get_tweet():
     else:
         print('E: Could not get home timeline at error ' + str(res.status_code))
         sys.exit(1)
+
+
+def read_ignores():
+    default_ignores = ['http', 'RT @']
+    default_ignore_words = ['#', '@']
+
+    if ignore_config is None:
+        return (default_ignores, default_ignore_words)
+
+    try:
+        with open(ignore_config) as f:
+            j = json.loads(f.read())
+            ignores = j['ignores']
+            ignore_words = j['ignore_words']
+            return(ignores, ignore_words)
+
+    except:
+        print('W: Ignore file reading error. Use default setting.')
+        return (default_ignores, default_ignore_words)
 
 
 def create_tokenized_blocks(tweets):
@@ -210,12 +233,19 @@ def argment_parser():
     argparser.add_argument('-v', '--verbose',
                            action='store_true',
                            help='show verbose message')
-    
+    argparser.add_argument('-i', '--ignores',
+                           help='set ignores configration file',
+                           type=str)
+
     args = argparser.parse_args()
 
     global verbose
+    global ignore_config
+
     verbose = args.verbose
-    
+    if args.ignores:
+        ignore_config = args.ignores
+
 
 if __name__ == "__main__":
     argment_parser()
