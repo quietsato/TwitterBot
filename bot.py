@@ -6,6 +6,7 @@ import math
 
 import MeCab as M
 from requests_oauthlib import OAuth1Session
+from argparse import ArgumentParser
 
 ACCESS_TOKEN = None
 ACCESS_TOKEN_SECRET = None
@@ -13,6 +14,7 @@ CONSUMER_KEY = None
 CONSUMER_KEY_SECRET = None
 USER_NAME = None
 
+verbose = False
 
 def get_environ():
     global ACCESS_TOKEN
@@ -31,6 +33,9 @@ def get_environ():
         if env is None:
             print('E: Environment value is not set.')
             sys.exit(1)
+    
+    if verbose:
+        print('Your Twitter User Name is ' + USER_NAME)
 
 
 def get_tweet():
@@ -46,6 +51,9 @@ def get_tweet():
         timeline = json.loads(res.text)
         tweets = []
         tweet_id = 0
+
+        if verbose:
+            print('Got Tweets From API (count: ' + str(len(timeline)) + ')')
 
         for tweet in timeline:
             tw = ''
@@ -67,7 +75,7 @@ def get_tweet():
 
             for word in text.split():
                 if '@' in word:
-                    # ツイート途中に@ユーザー名が出てきたら飛ばす
+                    # ツイート途中に@ユーザー名が出てきたらもう読まない
                     break
                 if '#' in word:
                     # ハッシュタグ以降は取り入れない
@@ -80,14 +88,16 @@ def get_tweet():
             if len(tw) > 0:
                 tweets.append((tw, tweet_id))
                 tweet_id += 1
+                if verbose:
+                    print('Add: ' + tw )
 
+        if verbose:
+            print('Create Tweet List (count:' + str(len(tweets)) + ')')
         return tweets
 
     else:
         print('E: Could not get home timeline at error ' + str(res.status_code))
         sys.exit(1)
-
-    return tweets
 
 
 def create_tokenized_blocks(tweets):
@@ -149,14 +159,15 @@ def select_block(joined_blocks):
                 cost += 1
 
         # ツイートする組を選ぶ
-        print(cost)
         if(len(joined) > 20):
             continue
         if (len(joined) - cost > math.floor(len(joined) * 0.5)):
             tmp.append(joined)
 
-    for t in tmp:
-        print(convert_blocks_tostr(t))
+            if verbose:
+                print('text: ' + convert_blocks_tostr(joined) + ' len: ' + str(len(joined)) +
+                      ' cost: ' + str(cost))
+
     return random.choice(tmp)
 
 
@@ -192,7 +203,22 @@ def tweet(text):
         print('E: Tweet failed at error: ' + str(res.status_code))
 
 
+def argment_parser():
+    usage = 'Usage: python {} [--verbose] [--help]'\
+            .format(__file__)
+    argparser = ArgumentParser(usage=usage)
+    argparser.add_argument('-v', '--verbose',
+                           action='store_true',
+                           help='show verbose message')
+    
+    args = argparser.parse_args()
+
+    global verbose
+    verbose = args.verbose
+    
+
 if __name__ == "__main__":
+    argment_parser()
     get_environ()
     tweets = get_tweet()
     blocks = create_tokenized_blocks(tweets)
