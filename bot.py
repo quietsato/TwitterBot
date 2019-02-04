@@ -16,6 +16,7 @@ USER_NAME = None
 
 verbose = False
 
+
 def get_environ():
     global ACCESS_TOKEN
     global ACCESS_TOKEN_SECRET
@@ -33,9 +34,9 @@ def get_environ():
         if env is None:
             print('E: Environment value is not set.')
             sys.exit(1)
-    
+
     if verbose:
-        print('Your Twitter User Name is ' + USER_NAME)
+        print('Your Twitter User Name is ' + USER_NAME + '\n')
 
 
 def get_tweet():
@@ -53,7 +54,7 @@ def get_tweet():
         tweet_id = 0
 
         if verbose:
-            print('Got Tweets From API (count: ' + str(len(timeline)) + ')')
+            print('Got Tweets From API (count: ' + str(len(timeline)) + ')\n')
 
         for tweet in timeline:
             tw = ''
@@ -84,15 +85,14 @@ def get_tweet():
 
             tw = tw.strip()
 
-
             if len(tw) > 0:
                 tweets.append((tw, tweet_id))
                 tweet_id += 1
                 if verbose:
-                    print('Add: ' + tw )
+                    print('Add: ' + tw)
 
         if verbose:
-            print('Create Tweet List (count:' + str(len(tweets)) + ')')
+            print('Create Tweet List (count:' + str(len(tweets)) + ')\n')
         return tweets
 
     else:
@@ -117,6 +117,8 @@ def create_tokenized_blocks(tweets):
         for i in range(len(words) - 2):
             block.append([words[i], words[i + 1], words[i + 2], _id])
 
+    if verbose:
+        print('Create Blocks (count: ' + str(len(block)) + ')\n')
     return block
 
 
@@ -131,8 +133,7 @@ def join_blocks(blocks):
         joined.append(head)
         while True:
             # 生成文の末尾が先頭に来るような要素を見つけて配列にする
-            nominated_blocks = [b for b in blocks
-                                if b[0] == joined[len(joined) - 1][2]]
+            nominated_blocks = [b for b in blocks if b[0] == joined[len(joined) - 1][2]]
 
             if len(nominated_blocks) == 0:
                 break
@@ -141,6 +142,10 @@ def join_blocks(blocks):
             block = random.choice(nominated_blocks)
             joined.append(block)
 
+            # 長すぎる文はカット
+            if(len(joined) > 20):
+                break
+
         joined_blocks.append(joined)
 
     return joined_blocks
@@ -148,7 +153,6 @@ def join_blocks(blocks):
 
 def select_block(joined_blocks):
     # 選ばれる候補
-    # tmp = []
     tmp = []
 
     for joined in joined_blocks:
@@ -159,8 +163,6 @@ def select_block(joined_blocks):
                 cost += 1
 
         # ツイートする組を選ぶ
-        if(len(joined) > 20):
-            continue
         if (len(joined) - cost > math.floor(len(joined) * 0.5)):
             tmp.append(joined)
 
@@ -168,7 +170,12 @@ def select_block(joined_blocks):
                 print('text: ' + convert_blocks_tostr(joined) + ' len: ' + str(len(joined)) +
                       ' cost: ' + str(cost))
 
-    return random.choice(tmp)
+    choice = random.choice(tmp)
+
+    if verbose:
+        print('\nSelect: ' + convert_blocks_tostr(choice) + '\n')
+
+    return choice
 
 
 def convert_blocks_tostr(blocks):
@@ -210,12 +217,12 @@ def argment_parser():
     argparser.add_argument('-v', '--verbose',
                            action='store_true',
                            help='show verbose message')
-    
+
     args = argparser.parse_args()
 
     global verbose
     verbose = args.verbose
-    
+
 
 if __name__ == "__main__":
     argment_parser()
