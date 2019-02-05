@@ -3,6 +3,7 @@ import os
 import sys
 import random
 import math
+import re
 
 import MeCab as M
 from requests_oauthlib import OAuth1Session
@@ -15,7 +16,7 @@ CONSUMER_KEY_SECRET = None
 USER_NAME = None
 
 verbose = False
-ignore_config = None
+ignore_path = None
 
 
 
@@ -58,9 +59,7 @@ def get_tweet():
         if verbose:
             print('Got Tweets From API (count: ' + str(len(timeline)) + ')\n')
 
-        ignore_config = read_ignores()
-        ignores = ignore_config[0]
-        ignore_words = ignore_config[1]
+        ignores = [re.compile(i) for i in read_ignores()]
 
         for tweet in timeline:
             tw = ''
@@ -69,24 +68,24 @@ def get_tweet():
 
             isignore = False
 
-            for ig in ignores:
-                if ig in text:
-                    isignore = True
-
-            if isignore:
-                continue
-
             if(user == USER_NAME):
                 # 自分のツイートから学習するとつまらない
                 continue
 
-            for word in text.split():
-                for ig in ignore_words:
-                    if ig in word:
-                        isignore = True
-                if isignore:
-                    break
-                tw += ' ' + word
+            for ig in ignores:
+                match = ig.match(text)
+                if match is None:
+                    continue
+                print('Ignore:  ' + match.group() + ')')
+                if match.span()[0] == 0:
+                    text = ''
+                else:
+                    text = text[:match.span()[0]] + text[match.span()[1]:]
+
+            if isignore:
+                continue
+          
+            tw += text
 
             tw = tw.strip()
 
@@ -106,22 +105,26 @@ def get_tweet():
 
 
 def read_ignores():
-    default_ignores = ['http', 'RT @']
-    default_ignore_words = ['#', '@']
+    default_ignores = [
+        r'[\s\S]*?(http|https).*$',
+        r'RT @[\s\S]*$',
+        r'#[\s\S]*$',
+        r'@[\s\S]*$']
 
-    if ignore_config is None:
-        return (default_ignores, default_ignore_words)
+    if ignore_path is None:
+        return default_ignores
 
     try:
-        with open(ignore_config) as f:
-            j = json.loads(f.read())
+        with open(ignore_path) as f:
+            j = json.loads(str(f.read()))
             ignores = j['ignores']
-            ignore_words = j['ignore_words']
-            return(ignores, ignore_words)
+            print(ignores)
+            print(default_ignores)
+            return ignores + default_ignores
 
     except:
         print('W: Ignore file reading error. Use default setting.')
-        return (default_ignores, default_ignore_words)
+        return default_ignores
 
 
 def create_tokenized_blocks(tweets):
@@ -248,11 +251,11 @@ def argment_parser():
     args = argparser.parse_args()
 
     global verbose
-    global ignore_config
+    global ignore_path
 
     verbose = args.verbose
     if args.ignores:
-        ignore_config = args.ignores
+        ignore_path = args.ignores
 
 
 if __name__ == "__main__":
@@ -264,4 +267,4 @@ if __name__ == "__main__":
     block = select_block(joined_blocks)
     text = convert_blocks_tostr(block)
     print(text)
-    tweet(text)
+    # tweet(text)
