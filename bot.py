@@ -106,7 +106,7 @@ def get_tweet():
 
 def read_ignores():
     default_ignores = [
-        r'[\s\S]*?(http|https).*$',
+        r'[\s\S]*?(https?)[\s\S]*$',
         r'RT @[\s\S]*$',
         r'#[\s\S]*$',
         r'@[\s\S]*$']
@@ -267,4 +267,4 @@ if __name__ == "__main__":
     block = select_block(joined_blocks)
     text = convert_blocks_tostr(block)
     print(text)
-    # tweet(text)
+    tweet(text)
