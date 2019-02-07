@@ -76,7 +76,7 @@ def get_tweet():
                 match = ig.match(text)
                 if match is None:
                     continue
-                print('Ignore:  ' + match.group() + ')')
+                print('Ignore:  ' + match.group())
                 if match.span()[0] == 0:
                     text = ''
                 else:
