@@ -16,8 +16,10 @@ CONSUMER_KEY_SECRET = None
 USER_NAME = None
 
 verbose = False
+do_tweet = True
 ignore_path = None
-
+max_length = 20
+tweet_count = 200
 
 
 def get_environ():
@@ -47,7 +49,7 @@ def get_tweet():
                             ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
 
     url = "https://api.twitter.com/1.1/statuses/home_timeline.json"
-    params = {'count': 200}
+    params = {'count': tweet_count}
 
     res = session.get(url, params=params)
 
@@ -76,7 +78,8 @@ def get_tweet():
                 match = ig.match(text)
                 if match is None:
                     continue
-                print('Ignore:  ' + match.group())
+                if verbose:
+                    print('Ignore:  ' + match.group())
                 if match.span()[0] == 0:
                     text = ''
                 else:
@@ -84,7 +87,7 @@ def get_tweet():
 
             if isignore:
                 continue
-          
+
             tw += text
 
             tw = tw.strip()
@@ -118,12 +121,14 @@ def read_ignores():
         with open(ignore_path) as f:
             j = json.loads(str(f.read()))
             ignores = j['ignores']
-            print(ignores)
-            print(default_ignores)
+            if verbose:
+                print('Ignore Patterns:')
+                for i in ignores + default_ignores:
+                    print(i)
             return ignores + default_ignores
 
     except:
-        print('W: Ignore file reading error. Use default setting.')
+        print('W: Error reading ignore config. Use default setting.')
         return default_ignores
 
 
@@ -160,7 +165,8 @@ def join_blocks(blocks):
         joined.append(head)
         while True:
             # 生成文の末尾が先頭に来るような要素を見つけて配列にする
-            nominated_blocks = [b for b in blocks if b[0] == joined[len(joined) - 1][2]]
+            nominated_blocks = [b for b in blocks if b[0]
+                                == joined[len(joined) - 1][2]]
 
             if len(nominated_blocks) == 0:
                 break
@@ -170,7 +176,7 @@ def join_blocks(blocks):
             joined.append(block)
 
             # 長すぎる文はカット
-            if(len(joined) > 20):
+            if(len(joined) > max_length):
                 break
 
         joined_blocks.append(joined)
@@ -232,30 +238,48 @@ def tweet(text):
     res = twitter.post(url, params=params)
 
     if res.status_code == 200:
-        print('success!!')
+        if verbose:
+            print('Tweet success!!')
     else:
         print('E: Tweet failed at error: ' + str(res.status_code))
 
 
 def argment_parser():
-    usage = 'Usage: python {} [--verbose] [--help]'\
+    usage = 'Usage: python3 {} [-v] [-nt] [-i] FILE [-c] INT [-m] INT [--help]'\
             .format(__file__)
     argparser = ArgumentParser(usage=usage)
     argparser.add_argument('-v', '--verbose',
                            action='store_true',
                            help='show verbose message')
+    argparser.add_argument('-nt', '--no-tweet',
+                           action='store_true',
+                           help='don\'t post tweet, just console output')
     argparser.add_argument('-i', '--ignores',
                            help='set ignores configration file',
                            type=str)
+    argparser.add_argument('-c', '--get-count',
+                           help='count of tweets got from TimeLine, default is 200',
+                           type=int)
+    argparser.add_argument('-m', '--max-length',
+                           help='set max count of blocks to generate sentence, default is 20',
+                           type=int)
 
     args = argparser.parse_args()
 
     global verbose
+    global do_tweet
     global ignore_path
+    global tweet_count
+    global max_length
 
     verbose = args.verbose
+    do_tweet = not args.no_tweet
     if args.ignores:
         ignore_path = args.ignores
+    if args.get_count:
+        tweet_count = args.get_count
+    if args.max_length:
+        max_length = args.max_length
 
 
 if __name__ == "__main__":
@@ -267,4 +291,5 @@ if __name__ == "__main__":
     block = select_block(joined_blocks)
     text = convert_blocks_tostr(block)
     print(text)
-    tweet(text)
+    if do_tweet:
+        tweet(text)
