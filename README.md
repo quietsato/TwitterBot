@@ -1,9 +1,7 @@
 # TwitterBot
-タイムラインで取得したツイートから、マルコフ連鎖を利用してできた文をツイートするボット  
 Tweet with the sentence that generated with tweets on TimeLine.
 
 ## How to run
-以下のように環境変数を設定してください  
 Set these environment values.
 ```run.sh
 export ACCESS_TOKEN="twitter access token"
