@@ -38,7 +38,7 @@ def get_environ():
         if env is None:
             print('E: Environment value is not set.')
             sys.exit(1)
-    
+
     if verbose:
         print('Your Twitter User Name is ' + USER_NAME)
 
@@ -163,13 +163,8 @@ def join_blocks(blocks):
         joined.append(head)
         while True:
             # 生成文の末尾が先頭に来るような要素を見つけて配列にする
-<<<<<<< HEAD
-            nominated_blocks = [b for b in blocks if b[0]
-                                == joined[len(joined) - 1][2]]
-=======
             nominated_blocks = [b for b in blocks
                                 if b[0] == joined[len(joined) - 1][2]]
->>>>>>> parent of 755aef2... :ambulance: "ほっんほっ"みたいな永遠に続きそうなツイートが来ると無限ループで帰ってこなくなるのを修正
 
             if len(nominated_blocks) == 0:
                 break
@@ -178,13 +173,10 @@ def join_blocks(blocks):
             block = random.choice(nominated_blocks)
             joined.append(block)
 
-<<<<<<< HEAD
             # 長すぎる文はカット
             if(len(joined) > max_length):
                 break
 
-=======
->>>>>>> parent of 755aef2... :ambulance: "ほっんほっ"みたいな永遠に続きそうなツイートが来ると無限ループで帰ってこなくなるのを修正
         joined_blocks.append(joined)
 
     return joined_blocks
@@ -249,13 +241,12 @@ def tweet(text):
 
 
 def argment_parser():
-    usage = 'Usage: python3 {} [-v] [-nt] [-i] FILE [-c] INT [-m] INT [--help]'\
+    usage = 'Usage: python3 {} [OPTIONS]'\
             .format(__file__)
     argparser = ArgumentParser(usage=usage)
     argparser.add_argument('-v', '--verbose',
                            action='store_true',
                            help='show verbose message')
-<<<<<<< HEAD
     argparser.add_argument('-nt', '--no-tweet',
                            action='store_true',
                            help='don\'t post tweet, just console output')
@@ -269,9 +260,6 @@ def argment_parser():
                            help='set max count of blocks to generate sentence, default is 20',
                            type=int)
 
-=======
-    
->>>>>>> parent of 755aef2... :ambulance: "ほっんほっ"みたいな永遠に続きそうなツイートが来ると無限ループで帰ってこなくなるのを修正
     args = argparser.parse_args()
 
     global verbose
@@ -281,7 +269,6 @@ def argment_parser():
     global max_length
 
     verbose = args.verbose
-<<<<<<< HEAD
     do_tweet = not args.no_tweet
     if args.ignores:
         ignore_path = args.ignores
@@ -290,9 +277,6 @@ def argment_parser():
     if args.max_length:
         max_length = args.max_length
 
-=======
-    
->>>>>>> parent of 755aef2... :ambulance: "ほっんほっ"みたいな永遠に続きそうなツイートが来ると無限ループで帰ってこなくなるのを修正
 
 if __name__ == "__main__":
     argment_parser()
