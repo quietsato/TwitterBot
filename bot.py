@@ -1,46 +1,22 @@
 import json
-import os
 import sys
 import random
 import math
-import re
 
 import MeCab as M
 from requests_oauthlib import OAuth1Session
 from argparse import ArgumentParser
 
-ACCESS_TOKEN = None
-ACCESS_TOKEN_SECRET = None
-CONSUMER_KEY = None
-CONSUMER_KEY_SECRET = None
-USER_NAME = None
+ACCESS_TOKEN = "access token"
+ACCESS_TOKEN_SECRET = "access token secret"
+CONSUMER_KEY = "consumer key"
+CONSUMER_KEY_SECRET = "consumer key secret"
+USER_NAME = "screen name without @"
 
 verbose = False
 do_tweet = True
-ignore_path = None
 max_length = 20
 tweet_count = 200
-
-def get_environ():
-    global ACCESS_TOKEN
-    global ACCESS_TOKEN_SECRET
-    global CONSUMER_KEY
-    global CONSUMER_KEY_SECRET
-    global USER_NAME
-
-    ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
-    ACCESS_TOKEN_SECRET = os.getenv('ACCESS_TOKEN_SECRET')
-    CONSUMER_KEY = os.getenv('CONSUMER_KEY')
-    CONSUMER_KEY_SECRET = os.getenv('CONSUMER_KEY_SECRET')
-    USER_NAME = os.getenv('TWITTER_USER_NAME')
-
-    for env in [ACCESS_TOKEN, ACCESS_TOKEN_SECRET, CONSUMER_KEY, CONSUMER_KEY_SECRET]:
-        if env is None:
-            print('E: Environment value is not set.')
-            sys.exit(1)
-
-    if verbose:
-        print('Your Twitter User Name is ' + USER_NAME)
 
 
 def get_tweet():
@@ -60,8 +36,6 @@ def get_tweet():
         if verbose:
             print('Got Tweets From API (count: ' + str(len(timeline)) + ')')
 
-        ignores = [re.compile(i) for i in read_ignores()]
-
         for tweet in timeline:
             tw = ''
             text = str(tweet['text'])
@@ -73,30 +47,24 @@ def get_tweet():
                 # 自分のツイートから学習するとつまらない
                 continue
 
-            for ig in ignores:
-                match = ig.match(text)
-                if match is None:
+            for prefix in ['@', 'RT @', 'http']:
+
+                if not prefix in text:
                     continue
                 if verbose:
-                    print('Ignore:  ' + match.group())
-                if match.span()[0] == 0:
-                    text = ''
-                else:
-                    text = text[:match.span()[0]] + text[match.span()[1]:]
+                    print('Ignore:  ' + text)
+                isignore = True
 
             if isignore:
                 continue
 
-            tw += text
-
-            tw = tw.strip()
-
+            tw = (tw + text).strip()
 
             if len(tw) > 0:
                 tweets.append((tw, tweet_id))
                 tweet_id += 1
                 if verbose:
-                    print('Add: ' + tw )
+                    print('Add: ' + tw)
 
         if verbose:
             print('Create Tweet List (count:' + str(len(tweets)) + ')')
@@ -105,31 +73,6 @@ def get_tweet():
     else:
         print('E: Could not get home timeline at error ' + str(res.status_code))
         sys.exit(1)
-
-
-def read_ignores():
-    default_ignores = [
-        r'[\s\S]*?(https?)[\s\S]*$',
-        r'RT @[\s\S]*$',
-        r'#[\s\S]*$',
-        r'@[\s\S]*$']
-
-    if ignore_path is None:
-        return default_ignores
-
-    try:
-        with open(ignore_path) as f:
-            j = json.loads(str(f.read()))
-            ignores = j['ignores']
-            if verbose:
-                print('Ignore Patterns:')
-                for i in ignores + default_ignores:
-                    print(i)
-            return ignores + default_ignores
-
-    except:
-        print('W: Error reading ignore config. Use default setting.')
-        return default_ignores
 
 
 def create_tokenized_blocks(tweets):
@@ -250,9 +193,6 @@ def argment_parser():
     argparser.add_argument('-nt', '--no-tweet',
                            action='store_true',
                            help='don\'t post tweet, just console output')
-    argparser.add_argument('-i', '--ignores',
-                           help='set ignores configration file',
-                           type=str)
     argparser.add_argument('-c', '--get-count',
                            help='count of tweets got from TimeLine, default is 200',
                            type=int)
@@ -264,14 +204,11 @@ def argment_parser():
 
     global verbose
     global do_tweet
-    global ignore_path
     global tweet_count
     global max_length
 
     verbose = args.verbose
     do_tweet = not args.no_tweet
-    if args.ignores:
-        ignore_path = args.ignores
     if args.get_count:
         tweet_count = args.get_count
     if args.max_length:
@@ -280,7 +217,6 @@ def argment_parser():
 
 if __name__ == "__main__":
     argment_parser()
-    get_environ()
     tweets = get_tweet()
     blocks = create_tokenized_blocks(tweets)
     joined_blocks = join_blocks(blocks)
